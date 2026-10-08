@@ -1,0 +1,62 @@
+@startuml
+' Dependency changes on feature/payments compared with main.
+title Dependency changes: feature/payments compared with main
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Segoe UI
+skinparam ArrowFontSize 11
+hide empty members
+
+legend top right
+  |= Color |= Meaning |
+  |<#C8E6C9>| added |
+  |<#FFCDD2>| removed |
+  |<#FFF3C4>| changed |
+  |<#F5F5F5>| unchanged, context only |
+  |= Arrow |= Meaning |
+  | dashed, "registers" | class is registered for dependency injection |
+endlegend
+
+package Shop.Orders {
+  class OrderService <<sealed>> #FFF3C4 {
+    -- added --
+    - _gateway : IPaymentGateway
+    + OrderService(IOrderRepository, IPaymentGateway, ILogger<OrderService>)
+    + PlaceOrderAsync(Customer, List<OrderLine>, CancellationToken) : Task<Order>
+    -- removed --
+    + <s>OrderService(IOrderRepository, ILogger<OrderService>)</s>
+    + <s>PlaceOrder(Customer, List<OrderLine>) : Order</s>
+  }
+  class PaymentFailedException <<sealed>> #C8E6C9
+  class Customer #FFF3C4 {
+    -- removed --
+    + <s>Id : int</s>
+  }
+  abstract class "EntityBase<TKey>" as EntityBase_1 #F5F5F5
+  interface IOrderRepository #F5F5F5
+  class "LegacyExporter" as LegacyExporter #FFCDD2
+  class Order <<record>> #F5F5F5
+}
+
+package Shop.Hosting {
+  class ServiceCollectionExtensions <<static>> #FFF3C4
+}
+
+package Shop.Payments {
+  interface IPaymentGateway #C8E6C9 {
+    + ChargeAsync(Order, CancellationToken) : Task<PaymentResult>
+  }
+  class StripeGateway <<sealed>> #C8E6C9
+  class PaymentResult <<record struct>> #C8E6C9
+}
+
+OrderService -[#2E7D32]-> IPaymentGateway : <<inject>>
+OrderService -[#2E7D32]..> PaymentFailedException : <<create>>
+OrderService -[#9E9E9E]-> IOrderRepository : <<inject>>
+StripeGateway -[#2E7D32]..|> IPaymentGateway
+IPaymentGateway -[#2E7D32]..> PaymentResult : <<use>>
+Customer -[#2E7D32]-|> EntityBase_1
+LegacyExporter -[#C62828,dashed]..> Order : <<use>>
+ServiceCollectionExtensions -[#2E7D32,dashed]-> StripeGateway : registers
+ServiceCollectionExtensions -[#C62828,dashed]-> LegacyExporter : registers
+@enduml

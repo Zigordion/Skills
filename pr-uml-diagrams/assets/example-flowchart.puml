@@ -1,0 +1,44 @@
+@startuml
+' Control flow changes in DiscountCalculator.Calculate compared with the merge base.
+title DiscountCalculator.Calculate: changes on feature/payments
+skinparam shadowing false
+skinparam defaultFontName Segoe UI
+skinparam conditionStyle InsideDiamond
+<style>
+activityDiagram {
+  activity { RoundCorner 0 }
+  .terminal { RoundCorner 60 }
+  .added { BackGroundColor #C8E6C9 }
+  .removed { BackGroundColor #FFCDD2 }
+  .changed { BackGroundColor #FFF3C4 }
+}
+</style>
+
+legend top right
+  |= Color |= Meaning |
+  |<#C8E6C9>| added |
+  |<#FFCDD2>| removed (struck through) |
+  |<#FFF3C4>| changed (old text struck through) |
+endlegend
+
+:Start: Calculate(order); <<terminal>>
+:Read customer tier;
+if (Tier is Gold?) then (yes)
+  :Discount = 15%\n<s>Discount = 10%</s>; <<changed>>
+else (no)
+  if (Order total > 500?) then (yes) <<added>>
+    :Discount = 5%; <<added>>
+  else (no)
+    :Discount = 0%;
+  endif
+endif
+:<s>Round to whole euros</s>; <<removed>>
+:Round to 2 decimals; <<added>>
+if (Discount > max allowed?) then (yes) <<added>>
+  :Cap at max allowed; <<added>>
+  :Log warning; <<added>>
+else (no)
+endif
+:End: return discount; <<terminal>>
+kill
+@enduml
